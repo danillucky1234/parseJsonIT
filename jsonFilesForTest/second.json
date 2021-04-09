@@ -1,0 +1,10 @@
+{
+    "firstName": "Homer",
+    "lastName": "Simpson",
+    "gender": "man",
+    "age": 39,
+    "streetAddress": "742 Evergreen Terrace",
+    "city": "Springfield",
+    "state": "MO",
+    "number": "+123456789"
+}

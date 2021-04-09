@@ -1,0 +1,6 @@
+[submodule "json"]
+	path = json
+	url = git@github.com:nlohmann/json.git
+[submodule "tabulate"]
+	path = tabulate
+	url = git@github.com:p-ranav/tabulate.git
