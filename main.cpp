@@ -60,10 +60,18 @@ public:
 
 };
 
-bool fileIsEmpty(std::ifstream& pFile);                                 // check file - is it empty?
-std::vector<std::string> getArgumentsWithoutOptions(const std::vector<std::string>& vec); // check input for additional options and save them. Returned value - arguments from 
-                                                                                            // the command line without additional options
-void printHelpMessage();                                                // print help - usage, possible input etc.
+bool fileIsEmpty(std::ifstream& pFile);                                                     // check file - is it empty?
+std::vector<std::string> getArgumentsWithoutOptions(const std::vector<std::string>& vec);   // check input for additional options and save them. Returned value - arguments from 
+                                                                                                        // the command line without additional options
+void printHelpMessage();                                                                    // print help - usage, possible input etc.
+
+
+template <class T>
+void printType(const T&)
+{
+    std::cout << __PRETTY_FUNCTION__ << "\n";
+}
+
 
 int main(int argc, char** argv)
 {
@@ -71,24 +79,25 @@ int main(int argc, char** argv)
 
     std::vector<std::string> arguments = getArgumentsWithoutOptions(allArguments);
 
+    const int argsSize = arguments.size();
     // checking input
-	if(arguments.size() < 2 && !PARAMETERS::HELP)
+	if(argsSize < 2 && !PARAMETERS::bHELP)
 	{
-        std::cerr << RED_COLOR_TEXT + "Incorrect input!\n"
-	              << WHITE_COLOR_TEXT + "Usage:\t./jsonParser [-h] [path/to/the/files]\n";
+        std::cerr << CColors::RED + "Incorrect input!\n"
+	              << CColors::WHITE + "Usage:\t./jsonParser [-h] [path/to/the/files]\n";
 		return -1;
 	}
-    else if (PARAMETERS::HELP) // if the input is like this: "./jsonParser -h" or "./jsonParser --help" or "./jsonParser fds sdg asdf -h" we print help message and exit
+    else if (PARAMETERS::bHELP) // if the input is like this: "./jsonParser -h" or "./jsonParser --help" or "./jsonParser fds sdg asdf -h" we print help message and exit
     {
         printHelpMessage();
         return 0;
     }
     
     std::set<std::string> allKeys;
-    std::map<std::string, boost::variant<nlohmann::json, std::string, std::bitset<16>, bool, int, unsigned int, float> > mp[arguments.size()];
+    std::map<std::string, boost::variant<nlohmann::json, std::string, std::bitset<16>, bool, int, unsigned int, float> > mp[argsSize];
 
 	// parse json files to string
-	for(int i = 0; i < arguments.size(); ++i)
+	for(int i = 0; i < argsSize; ++i)
 	{
 		// open the filestream
 		std::ifstream file;
@@ -148,31 +157,35 @@ int main(int argc, char** argv)
 
     // set header to our table
     vec.push_back("Keys");
-    for(int i = 0; i < arguments.size(); ++i)
+    for(int i = 0; i < argsSize; ++i)
     {
         vec.push_back(arguments[i]);
     }
     prettyTable.add_row(vec);
 
-    // colorize header
+    // bCOLORIZE header
 
-    for(int i = 0; i < arguments.size() + 1; ++i)
+    for(int i = 0; i < argsSize + 1; ++i)
     {
         prettyTable[0][i].format()
                 .font_align(tabulate::FontAlign::center)
                 .font_style({tabulate::FontStyle::bold});
-        if(PARAMETERS::COLORIZE)
+        if(PARAMETERS::bCOLORIZE)
         {
             prettyTable[0][i].format().font_color(tabulate::Color::yellow);
         }
     }
     
+    // bool bAreDifferentValuesInMaps   = false;    // if values from the keys are different in the same key, we can paint the cell in yellow
+    // bool bValueDoesntExist           = false;    // if value on such keys doesn't exists and we put '-' to the table, we can paint the cell in red
+
+    int counter = 0;
     for (const auto& it : allKeys)
     {
         vec.clear();
         vec.push_back(it);
         // put key in to the first column in our spreadsheet
-        for (int i = 0; i < arguments.size(); ++i)
+        for (int i = 0; i < argsSize; ++i)
         {
             // check - is such key exists in this map?
             if (mp[i].find(it) != mp[i].end())
@@ -183,10 +196,48 @@ int main(int argc, char** argv)
             else
             {
                 // if key doesn't contains in this map - push '-' to the cell in the table
-                vec.push_back("-");
+                vec.push_back(static_cast<std::string>("-"));
             }
         }
         prettyTable.add_row(vec);
+
+        if (PARAMETERS::bCOLORIZE)
+        {
+            for (int i = 0; i < argsSize + 1; ++i)
+            {
+                try
+                {
+                    // if value on such keys doesn't exists and we put '-' to the table, we can paint the cells in this row in red
+                    if(std::holds_alternative<std::string>(vec[i]))
+                    {
+                        if ( std::get<std::string>(vec[i]) == static_cast<std::string>("-"))
+                        {
+                            std::cout << "i: " << i << '\n';
+                            prettyTable[counter + 1][i].format().font_background_color(tabulate::Color::red);
+                        }
+                    }                    
+                }
+                catch(std::bad_variant_access const& ex)
+                {
+                    std::cout << ex.what() << ": vec[i] contained smth not a string\n";
+                }
+            }
+            ++counter;
+
+            // for(int i = 0; i < vec.size(); ++i)
+            // {
+            //     for (int j = i; j < vec.size(); ++j)
+            //     {
+            //         if ( !strcmp(vec[i], vec[i]) )
+            //         {
+            //             for(int k = 0; k < argsSize + 1; ++k)
+            //             {
+            //                 prettyTable[i][j].format().font_background_color(tabulate::Color::yellow);
+            //             }
+            //         }
+            //     }
+            // }
+        }
     }
 
     // print table and exit
@@ -207,11 +258,11 @@ std::vector<std::string> getArgumentsWithoutOptions(const std::vector<std::strin
     {
         if(!strcmp(it.c_str(), "-h") || !strcmp(it.c_str(), "--help"))
         {
-            PARAMETERS::HELP = true;
+            PARAMETERS::bHELP = true;
         }
-        else if(!strcmp(it.c_str(), "-c") || !strcmp(it.c_str(), "--colorize"))
+        else if(!strcmp(it.c_str(), "-c") || !strcmp(it.c_str(), "--bCOLORIZE"))
         {
-            PARAMETERS::COLORIZE = true;
+            PARAMETERS::bCOLORIZE = true;
         }
         else
         {
@@ -228,15 +279,15 @@ void printHelpMessage()
 
     
 	std::cout << "Optional arguments:\n";
-	if (PARAMETERS::COLORIZE)
+	if (PARAMETERS::bCOLORIZE)
     {
-        std::cout << "\t-h, --help\t\t\t" + BLUE_COLOR_TEXT + "Show this help message and exit\n" + WHITE_COLOR_TEXT;
-	    std::cout << "\t-c, --colorize\t\t\t" + BLUE_COLOR_TEXT + "Print the table using the colors\n" + WHITE_COLOR_TEXT;
+        std::cout << "\t-h, --help\t\t\t" + CColors::BLUE + "Show this help message and exit\n" + CColors::WHITE;
+	    std::cout << "\t-c, --bCOLORIZE\t\t\t" + CColors::BLUE + "Print the table using the colors\n" + CColors::WHITE;
     }
     else
     {
         std::cout << "\t-h, --help\t\t\tShow this help message and exit\n";
-	    std::cout << "\t-c, --colorize\t\t\tPrint the table using the colors\n";
+	    std::cout << "\t-c, --bCOLORIZE\t\t\tPrint the table using the colors\n";
     }
     std::cout << '\n';
 	std::cout << "###################\n";

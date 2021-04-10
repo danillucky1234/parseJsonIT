@@ -11,15 +11,19 @@
 #include "json/single_include/nlohmann/json.hpp"
 #include "tabulate/single_include/tabulate/tabulate.hpp"
 
-// CONST GLOBAL VARIABLES
-const std::string RED_COLOR_TEXT	= "\033[31m"; 
-const std::string GREEN_COLOR_TEXT	= "\033[32m"; 
-const std::string BLUE_COLOR_TEXT	= "\033[36m"; 
-const std::string WHITE_COLOR_TEXT	= "\033[0m";  
+// Custom colors namespace
+namespace CColors
+{
+    const std::string RED	= "\033[31m"; 
+    const std::string GREEN	= "\033[32m"; 
+    const std::string BLUE	= "\033[36m"; 
+    const std::string WHITE	= "\033[0m";  
+}
 
+// namespace with possible options
 namespace PARAMETERS
 {
-    bool COLORIZE       = false;
-    bool HELP           = false;
+    bool bCOLORIZE       = false;
+    bool bHELP           = false;
 
 }
