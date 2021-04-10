@@ -1,15 +1,4 @@
-#include <iostream>
-#include <fstream>
-#include <set>
-#include <map>
-#include <vector>
-#include <boost/variant.hpp>
-#include <sstream>
-#include <array>
-#include <bitset>
-#include <boost/sort/spreadsort/string_sort.hpp>
-#include "json/single_include/nlohmann/json.hpp"
-#include "tabulate/single_include/tabulate/tabulate.hpp"
+#include "includes.h"
 
 class my_visitor: public boost::static_visitor<std::string>
 {
@@ -71,45 +60,55 @@ public:
 
 };
 
-bool fileIsEmpty(std::ifstream& pFile)
-{
-	return pFile.peek() == std::ifstream::traits_type::eof();
-}
+bool fileIsEmpty(std::ifstream& pFile);                                 // check file - is it empty?
+std::vector<std::string> getArgumentsWithoutOptions(const std::vector<std::string>& vec); // check input for additional options and save them. Returned value - arguments from 
+                                                                                            // the command line without additional options
+void printHelpMessage();                                                // print help - usage, possible input etc.
 
 int main(int argc, char** argv)
 {
+    std::vector<std::string> allArguments(argv + 1, argv + argc); // save argv's to the vector of strings
+
+    std::vector<std::string> arguments = getArgumentsWithoutOptions(allArguments);
+
     // checking input
-	if(argc < 3)
+	if(arguments.size() < 2 && !PARAMETERS::HELP)
 	{
-		std::cerr << "Not enough files!\n";
+        std::cerr << RED_COLOR_TEXT + "Incorrect input!\n"
+	              << WHITE_COLOR_TEXT + "Usage:\t./jsonParser [-h] [path/to/the/files]\n";
 		return -1;
 	}
+    else if (PARAMETERS::HELP) // if the input is like this: "./jsonParser -h" or "./jsonParser --help" or "./jsonParser fds sdg asdf -h" we print help message and exit
+    {
+        printHelpMessage();
+        return 0;
+    }
     
     std::set<std::string> allKeys;
-    std::map<std::string, boost::variant<nlohmann::json, std::string, std::bitset<16>, bool, int, unsigned int, float> > mp[argc - 1];
+    std::map<std::string, boost::variant<nlohmann::json, std::string, std::bitset<16>, bool, int, unsigned int, float> > mp[arguments.size()];
 
 	// parse json files to string
-	for(int i = 1; i < argc; ++i)
+	for(int i = 0; i < arguments.size(); ++i)
 	{
 		// open the filestream
 		std::ifstream file;
         file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
 		try
 		{
-            
-			file.open(argv[i]);
+			file.open(arguments[i]);
 		}
 		catch (const std::ifstream::failure& ex)
 		{
 			// checking for opening files
-			std::cerr << "Error while opening the file " << argv[i] << ":\t" << ex.what() << '\n';
+			std::cerr << "Error while opening the file " << arguments[i];
+            std::cerr << "Error code: " << ex.what() << '\n';
 			return -1;
 		}
 
 		// check file - is it empty?
 		if(fileIsEmpty(file))
 		{
-			std::cerr << "File " << argv[i] << " is empty!\n";
+			std::cerr << "File " << arguments[i] << " is empty!\n";
 			return -1;
 		}
 
@@ -120,7 +119,7 @@ int main(int argc, char** argv)
         }
         catch(const std::exception& ex)
         {
-            std::cout << "An error occured while parsing the file " << argv[i] << '\n';
+            std::cout << "An error occured while parsing the file " << arguments[i] << '\n';
             return -1;
         }
 
@@ -135,7 +134,7 @@ int main(int argc, char** argv)
 		for (const auto& it : j.items())
 		{
             varVal = it.value();
-            mp[i - 1].insert(std::make_pair(it.key(), varVal));
+            mp[i].insert(std::make_pair(it.key(), varVal));
             allKeys.insert(it.key());
 		}
 
@@ -149,29 +148,33 @@ int main(int argc, char** argv)
 
     // set header to our table
     vec.push_back("Keys");
-    for(int i = 1; i < argc; ++i)
+    for(int i = 0; i < arguments.size(); ++i)
     {
-        vec.push_back(argv[i]);
+        vec.push_back(arguments[i]);
     }
     prettyTable.add_row(vec);
 
-    // colorize header 
-    for(int i = 0; i < argc; ++i)
+    // colorize header
+
+    for(int i = 0; i < arguments.size() + 1; ++i)
     {
         prettyTable[0][i].format()
-                .font_color(tabulate::Color::yellow)
                 .font_align(tabulate::FontAlign::center)
                 .font_style({tabulate::FontStyle::bold});
+        if(PARAMETERS::COLORIZE)
+        {
+            prettyTable[0][i].format().font_color(tabulate::Color::yellow);
+        }
     }
-
+    
     for (const auto& it : allKeys)
     {
         vec.clear();
         vec.push_back(it);
         // put key in to the first column in our spreadsheet
-        for (int i = 0; i < argc - 1; ++i)
+        for (int i = 0; i < arguments.size(); ++i)
         {
-            // check - does such key exists in this map?
+            // check - is such key exists in this map?
             if (mp[i].find(it) != mp[i].end())
             {
                 // if key exists - get value and put into row (vector)
@@ -192,4 +195,56 @@ int main(int argc, char** argv)
 }
 
 
+bool fileIsEmpty(std::ifstream& pFile)
+{
+	return pFile.peek() == std::ifstream::traits_type::eof();
+}
 
+std::vector<std::string> getArgumentsWithoutOptions(const std::vector<std::string>& vec)
+{
+    std::vector<std::string> returnedVector;
+    for (const auto& it: vec)
+    {
+        if(!strcmp(it.c_str(), "-h") || !strcmp(it.c_str(), "--help"))
+        {
+            PARAMETERS::HELP = true;
+        }
+        else if(!strcmp(it.c_str(), "-c") || !strcmp(it.c_str(), "--colorize"))
+        {
+            PARAMETERS::COLORIZE = true;
+        }
+        else
+        {
+            returnedVector.push_back(it);
+        }
+    }
+
+    return returnedVector;
+}
+
+void printHelpMessage()
+{
+	std::cout << "Usage:\t./jsonParser [-h] [path/to/the/files]\n\n";
+
+    
+	std::cout << "Optional arguments:\n";
+	if (PARAMETERS::COLORIZE)
+    {
+        std::cout << "\t-h, --help\t\t\t" + BLUE_COLOR_TEXT + "Show this help message and exit\n" + WHITE_COLOR_TEXT;
+	    std::cout << "\t-c, --colorize\t\t\t" + BLUE_COLOR_TEXT + "Print the table using the colors\n" + WHITE_COLOR_TEXT;
+    }
+    else
+    {
+        std::cout << "\t-h, --help\t\t\tShow this help message and exit\n";
+	    std::cout << "\t-c, --colorize\t\t\tPrint the table using the colors\n";
+    }
+    std::cout << '\n';
+	std::cout << "###################\n";
+	std::cout << "#  Usage Examples #\n";
+	std::cout << "###################\n\n";
+
+	std::cout << "$ ./jsonParser -h\n";
+    std::cout << "$ ./jsonParser -h -c\n";
+	std::cout << "$ ./jsonParser jsonFilesForTest/first.json jsonFilesForTest/second.json\n";
+    std::cout << "$ ./jsonParser -c jsonFilesForTest/file1.json jsonFilesForTest/file2.json\n";
+}
