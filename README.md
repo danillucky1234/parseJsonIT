@@ -13,6 +13,8 @@ or
 
 3. `git clone https://github.com/nlohmann/json.git && git clone https://github.com/p-ranav/tabulate.git` 
 
+3. `g++ main.cpp -Wall -std=c++17 -o jsonParser`
+
 4. `g++ main.cpp -Wall -std=c++17 -o jsonParser`
 
 5. `./jsonParser jsonFilesForTest/file1.json jsonFilesForTest/file2.json jsonFilesForTest/file3.json`  
