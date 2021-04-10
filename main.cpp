@@ -67,11 +67,7 @@ void printHelpMessage();                                                        
 
 
 template <class T>
-void printType(const T&)
-{
-    std::cout << __PRETTY_FUNCTION__ << "\n";
-}
-
+void printType(const T&);
 
 int main(int argc, char** argv)
 {
@@ -109,7 +105,7 @@ int main(int argc, char** argv)
 		catch (const std::ifstream::failure& ex)
 		{
 			// checking for opening files
-			std::cerr << "Error while opening the file " << arguments[i];
+			std::cerr << "Error while opening the file \"" << arguments[i] << "\"\n";
             std::cerr << "Error code: " << ex.what() << '\n';
 			return -1;
 		}
@@ -164,7 +160,6 @@ int main(int argc, char** argv)
     prettyTable.add_row(vec);
 
     // bCOLORIZE header
-
     for(int i = 0; i < argsSize + 1; ++i)
     {
         prettyTable[0][i].format()
@@ -176,9 +171,6 @@ int main(int argc, char** argv)
         }
     }
     
-    // bool bAreDifferentValuesInMaps   = false;    // if values from the keys are different in the same key, we can paint the cell in yellow
-    // bool bValueDoesntExist           = false;    // if value on such keys doesn't exists and we put '-' to the table, we can paint the cell in red
-
     int counter = 0;
     for (const auto& it : allKeys)
     {
@@ -205,38 +197,28 @@ int main(int argc, char** argv)
         {
             for (int i = 0; i < argsSize + 1; ++i)
             {
-                try
+                for (int j = i + 1; j < argsSize; ++j)
                 {
-                    // if value on such keys doesn't exists and we put '-' to the table, we can paint the cells in this row in red
-                    if(std::holds_alternative<std::string>(vec[i]))
+                    // and if the values in the row are different - we change bg_color of the key-cell to yellow
+                    if (std::get<std::string>(vec[i + 1]) != std::get<std::string>(vec[j + 1]))
                     {
-                        if ( std::get<std::string>(vec[i]) == static_cast<std::string>("-"))
-                        {
-                            std::cout << "i: " << i << '\n';
-                            prettyTable[counter + 1][i].format().font_background_color(tabulate::Color::red);
-                        }
-                    }                    
+                        prettyTable[counter + 1][0].format()
+                                            .font_background_color(tabulate::Color::yellow)
+                                            .font_color(tabulate::Color::grey);
+                        break;
+                    }
                 }
-                catch(std::bad_variant_access const& ex)
+
+                // if value on such keys doesn't exists and we put '-' to the table, we can paint the cells in this row in red
+                if(std::holds_alternative<std::string>(vec[i]))
                 {
-                    std::cout << ex.what() << ": vec[i] contained smth not a string\n";
+                    if ( std::get<std::string>(vec[i]) == static_cast<std::string>("-"))
+                    {
+                        prettyTable[counter + 1][i].format().font_background_color(tabulate::Color::red);
+                    }
                 }
             }
             ++counter;
-
-            // for(int i = 0; i < vec.size(); ++i)
-            // {
-            //     for (int j = i; j < vec.size(); ++j)
-            //     {
-            //         if ( !strcmp(vec[i], vec[i]) )
-            //         {
-            //             for(int k = 0; k < argsSize + 1; ++k)
-            //             {
-            //                 prettyTable[i][j].format().font_background_color(tabulate::Color::yellow);
-            //             }
-            //         }
-            //     }
-            // }
         }
     }
 
@@ -282,12 +264,12 @@ void printHelpMessage()
 	if (PARAMETERS::bCOLORIZE)
     {
         std::cout << "\t-h, --help\t\t\t" + CColors::BLUE + "Show this help message and exit\n" + CColors::WHITE;
-	    std::cout << "\t-c, --bCOLORIZE\t\t\t" + CColors::BLUE + "Print the table using the colors\n" + CColors::WHITE;
+	    std::cout << "\t-c, --colorize\t\t\t" + CColors::BLUE + "Print the table using the colors\n" + CColors::WHITE;
     }
     else
     {
         std::cout << "\t-h, --help\t\t\tShow this help message and exit\n";
-	    std::cout << "\t-c, --bCOLORIZE\t\t\tPrint the table using the colors\n";
+	    std::cout << "\t-c, --colorize\t\t\tPrint the table using the colors\n";
     }
     std::cout << '\n';
 	std::cout << "###################\n";
