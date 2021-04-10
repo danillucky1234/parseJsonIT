@@ -11,9 +11,11 @@ or
 
 2. `cd parseJsonIT`
 
-3. `g++ -Wall -std=c++17 -o jsonParser`
+3. `git clone https://github.com/nlohmann/json.git && git clone https://github.com/p-ranav/tabulate.git` 
 
-4. `./jsonParser jsonFilesForTest/file1.json jsonFilesForTest/file2.json jsonFilesForTest/file3.json`  
+4. `g++ main.cpp -Wall -std=c++17 -o jsonParser`
+
+5. `./jsonParser jsonFilesForTest/file1.json jsonFilesForTest/file2.json jsonFilesForTest/file3.json`  
 
 <p align="center">
     <img src="imagesExample/file1_file2_file3.png">
