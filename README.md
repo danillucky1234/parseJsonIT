@@ -11,7 +11,7 @@ or
 
 2. `cd parseJsonIT`
 
-3. `g++ -Wall -std=c++17 -o jsonParser`
+3. `g++ main.cpp -Wall -std=c++17 -o jsonParser`
 
 4. `./jsonParser jsonFilesForTest/file1.json jsonFilesForTest/file2.json jsonFilesForTest/file3.json`  
 
