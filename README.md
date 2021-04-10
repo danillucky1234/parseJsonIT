@@ -28,8 +28,21 @@ or
     <img src="imagesExample/firstAndSecondJsonFiles.png">
 </p>
 
+Also you can use additional options like `-c`, which can help find different values in the spreadsheet like this:  
+`./jsonParser jsonFilesForTest/first.json jsonFilesForTest/second.json -c`  
+
+<p align="center">
+    <img src="imagesExample/file1_file2_file3_colorized.png">
+</p>
+
+<p align="center">
+    <img src="imagesExample/firstAndSecondJsonFiles_colorized.png">
+</p>
+
+## Use `-h` to get detailed information  
 This project was originally designed to compare .json files obtained with exiftool, so here is what the table with the files generated with exiftool looks like:
 
 <p align="center">
     <img src="imagesExample/anotherExample.png">
 </p>
+
