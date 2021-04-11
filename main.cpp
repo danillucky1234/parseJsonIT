@@ -147,16 +147,29 @@ int main(int argc, char** argv)
 	}
 
     tabulate::Table prettyTable;
-    
+        
     // firstly, we need to write the columns in one vector (one value in the vector - one column in the table), and after this put this vector to add_row()
     std::vector<std::variant<std::string, const char*, tabulate::Table>> vec;
 
     // set header to our table
     vec.push_back("Keys");
-    for(int i = 0; i < argsSize; ++i)
+    if (PARAMETERS::bPath)
     {
-        vec.push_back(arguments[i]);
+        for (const auto& it : arguments)
+        {
+            vec.push_back(it);
+        }
     }
+    else
+    {
+        // clear path of the files and add to the table only names of the files 
+        std::regex rgx(".*/");
+        for (auto it : arguments)
+        {
+            vec.push_back(std::regex_replace(it, rgx, ""));
+        }
+    }
+
     prettyTable.add_row(vec);
 
     // bCOLORIZE header
@@ -246,6 +259,10 @@ std::vector<std::string> getArgumentsWithoutOptions(const std::vector<std::strin
         {
             PARAMETERS::bCOLORIZE = true;
         }
+        else if (!strcmp(it.c_str(), "-p") || !strcmp(it.c_str(), "--path"))
+        {
+            PARAMETERS::bPath = true;
+        }
         else
         {
             returnedVector.push_back(it);
@@ -265,11 +282,13 @@ void printHelpMessage()
     {
         std::cout << "\t-h, --help\t\t\t" + CColors::BLUE + "Show this help message and exit\n" + CColors::WHITE;
 	    std::cout << "\t-c, --colorize\t\t\t" + CColors::BLUE + "Print the table using the colors\n" + CColors::WHITE;
+        std::cout << "\t-p, --path\t\t\t" + CColors::BLUE + "Print the path to the files\n" + CColors::WHITE;
     }
     else
     {
         std::cout << "\t-h, --help\t\t\tShow this help message and exit\n";
 	    std::cout << "\t-c, --colorize\t\t\tPrint the table using the colors\n";
+        std::cout << "\t-p, --path\t\t\tPrint the path to the files\n";
     }
     std::cout << '\n';
 	std::cout << "###################\n";
@@ -280,4 +299,5 @@ void printHelpMessage()
     std::cout << "$ ./jsonParser -h -c\n";
 	std::cout << "$ ./jsonParser jsonFilesForTest/first.json jsonFilesForTest/second.json\n";
     std::cout << "$ ./jsonParser -c jsonFilesForTest/file1.json jsonFilesForTest/file2.json\n";
+    std::cout << "$ ./jsonParser -c -p jsonFilesForTest/first.json jsonFilesForTest/second.json\n";
 }

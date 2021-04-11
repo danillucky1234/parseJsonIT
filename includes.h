@@ -7,6 +7,7 @@
 #include <sstream>
 #include <array>
 #include <bitset>
+#include <regex>
 #include <boost/sort/spreadsort/string_sort.hpp>
 #include "json/single_include/nlohmann/json.hpp"
 #include "tabulate/single_include/tabulate/tabulate.hpp"
@@ -23,7 +24,7 @@ namespace CColors
 // namespace with possible options
 namespace PARAMETERS
 {
-    bool bCOLORIZE       = false;
-    bool bHELP           = false;
-
+    bool bCOLORIZE          = false;
+    bool bHELP              = false;
+    bool bPath              = false;
 }
